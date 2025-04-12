@@ -49,4 +49,4 @@ Invoke-ImpersonatedCommand -Username "AdminUser" -Password "YourPasswordHere" -S
     # You can put any command here to run as the impersonated user
 }
 
-
+Start-Process powershell -Credential (New-Object System.Management.Automation.PSCredential("hostname\adminuser", (ConvertTo-SecureString "password" -AsPlainText -Force))) -NoNewWindow
