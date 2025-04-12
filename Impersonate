@@ -1,0 +1,52 @@
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
+
+public class Impersonator
+{
+    [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern bool LogonUser(string lpszUsername, string lpszDomain, string lpszPassword,
+        int dwLogonType, int dwLogonProvider, out IntPtr phToken);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+    public extern static bool CloseHandle(IntPtr handle);
+}
+"@
+
+function Invoke-ImpersonatedCommand {
+    param (
+        [string]$Username,
+        [string]$Password,
+        [string]$Domain = ".",
+        [scriptblock]$ScriptBlock
+    )
+
+    $token = [IntPtr]::Zero
+    $logonType = 2       # Interactive
+    $logonProvider = 0   # Default
+
+    $result = [Impersonator]::LogonUser($Username, $Domain, $Password, $logonType, $logonProvider, [ref]$token)
+
+    if (-not $result) {
+        throw "Logon failed. Error code: $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+    }
+
+    $identity = New-Object System.Security.Principal.WindowsIdentity $token
+    $context = $identity.Impersonate()
+
+    try {
+        & $ScriptBlock
+    } finally {
+        $context.Undo()
+        [Impersonator]::CloseHandle($token)
+    }
+}
+
+
+Invoke-ImpersonatedCommand -Username "AdminUser" -Password "YourPasswordHere" -ScriptBlock {
+    whoami
+    # You can put any command here to run as the impersonated user
+}
+
+
